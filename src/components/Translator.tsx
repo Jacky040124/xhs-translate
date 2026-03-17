@@ -4,16 +4,44 @@ import { useState, useEffect, useRef } from "react";
 import { Selector } from "./Selector";
 import { TextArea } from "./TextArea";
 import { CopyButton } from "./CopyButton";
+import { IconButton } from "./IconButton";
 import { styles, inputTypes } from "@/lib/prompts";
 
 function SkeletonLoader() {
   return (
-    <div className="space-y-3 animate-pulse">
-      <div className="h-4 bg-gray-300 rounded w-full"></div>
-      <div className="h-4 bg-gray-300 rounded w-full"></div>
-      <div className="h-4 bg-gray-300 rounded w-5/6"></div>
-      <div className="h-4 bg-gray-300 rounded w-4/6"></div>
+    <div className="space-y-4 pt-2">
+      <div className="h-5 skeleton rounded w-full"></div>
+      <div className="h-5 skeleton rounded w-full"></div>
+      <div className="h-5 skeleton rounded w-5/6"></div>
+      <div className="h-5 skeleton rounded w-4/6"></div>
+      <div className="h-5 skeleton rounded w-3/4"></div>
     </div>
+  );
+}
+
+function ClearIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M6 18L18 6M6 6l12 12"
+      />
+    </svg>
+  );
+}
+
+function SwapIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+      />
+    </svg>
   );
 }
 
@@ -25,7 +53,6 @@ export function Translator() {
   const [loading, setLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // 实时翻译：debounce 500ms
   useEffect(() => {
     if (!inputText.trim()) {
       setOutputText("");
@@ -42,7 +69,6 @@ export function Translator() {
   const handleTranslate = async () => {
     if (!inputText.trim()) return;
 
-    // 取消之前的请求
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -67,7 +93,7 @@ export function Translator() {
       }
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        return; // 请求被取消，忽略
+        return;
       }
       setOutputText("翻译失败，请稍后重试");
     } finally {
@@ -75,41 +101,88 @@ export function Translator() {
     }
   };
 
+  const handleClear = () => {
+    setInputText("");
+    setOutputText("");
+  };
+
+  const handleSwap = () => {
+    if (outputText && !outputText.startsWith("错误")) {
+      setInputText(outputText);
+      setOutputText("");
+    }
+  };
+
   return (
-    <div className="w-full max-w-6xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-0 border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
-        {/* 输入区域 */}
-        <div className="p-4 lg:border-r border-gray-200">
-          <div className="mb-3">
-            <Selector
-              label=""
-              options={inputTypes}
-              value={inputType}
-              onChange={setInputType}
+    <div className="w-full max-w-7xl mx-auto px-4">
+      <div className="relative flex flex-col lg:flex-row bg-[var(--bg-secondary)] rounded-2xl overflow-hidden border border-[var(--border-color)] shadow-2xl shadow-black/20">
+        {/* Input Panel */}
+        <div className="flex-1 flex flex-col min-h-[400px] lg:min-h-[500px]">
+          {/* Input Toolbar */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-color)]">
+            <div className="flex items-center gap-1">
+              <Selector
+                options={inputTypes}
+                value={inputType}
+                onChange={setInputType}
+              />
+            </div>
+            <div className="flex items-center gap-1">
+              <IconButton onClick={handleClear} disabled={!inputText} title="清空">
+                <ClearIcon />
+              </IconButton>
+            </div>
+          </div>
+
+          {/* Input Area */}
+          <div className="flex-1 px-5 py-4 overflow-auto">
+            <TextArea
+              value={inputText}
+              onChange={setInputText}
+              placeholder="输入要翻译的文字..."
             />
           </div>
-          <TextArea
-            value={inputText}
-            onChange={setInputText}
-            placeholder="输入要翻译的文字..."
-          />
+
+          {/* Input Footer */}
+          <div className="px-5 py-3 border-t border-[var(--border-color)]">
+            <span className="text-xs text-[var(--text-muted)]">
+              {inputText.length} 字符
+            </span>
+          </div>
         </div>
 
-        {/* 输出区域 */}
-        <div className="p-4 bg-gray-50/50 border-t lg:border-t-0 border-gray-200">
-          <div className="mb-3">
-            <Selector
-              label=""
-              options={styles}
-              value={style}
-              onChange={setStyle}
-            />
+        {/* Center Divider with Swap Button */}
+        <div className="relative flex lg:flex-col items-center justify-center px-2 py-2 lg:py-0 border-t lg:border-t-0 lg:border-l lg:border-r border-[var(--border-color)] bg-[var(--bg-primary)]">
+          <button
+            onClick={handleSwap}
+            disabled={!outputText || outputText.startsWith("错误")}
+            className="p-3 rounded-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--accent)] hover:border-[var(--accent)] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
+            title="交换"
+          >
+            <SwapIcon />
+          </button>
+        </div>
+
+        {/* Output Panel */}
+        <div className="flex-1 flex flex-col min-h-[400px] lg:min-h-[500px] bg-[var(--bg-tertiary)]/30">
+          {/* Output Toolbar */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-color)]">
+            <div className="flex items-center gap-1">
+              <Selector
+                options={styles}
+                value={style}
+                onChange={setStyle}
+              />
+            </div>
+            <div className="flex items-center gap-1">
+              <CopyButton text={outputText} />
+            </div>
           </div>
-          <div className="relative">
+
+          {/* Output Area */}
+          <div className="flex-1 px-5 py-4 overflow-auto">
             {loading ? (
-              <div className="h-72 p-4">
-                <SkeletonLoader />
-              </div>
+              <SkeletonLoader />
             ) : (
               <TextArea
                 value={outputText}
@@ -117,11 +190,13 @@ export function Translator() {
                 readOnly
               />
             )}
-            {outputText && !loading && !outputText.startsWith("错误") && (
-              <div className="absolute bottom-4 right-4">
-                <CopyButton text={outputText} />
-              </div>
-            )}
+          </div>
+
+          {/* Output Footer */}
+          <div className="px-5 py-3 border-t border-[var(--border-color)]">
+            <span className="text-xs text-[var(--text-muted)]">
+              {outputText.length} 字符
+            </span>
           </div>
         </div>
       </div>
