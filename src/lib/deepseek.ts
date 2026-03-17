@@ -1,11 +1,11 @@
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 interface TranslateOptions {
   text: string;
   systemPrompt: string;
 }
 
-interface DeepSeekResponse {
+interface OpenRouterResponse {
   choices: {
     message: {
       content: string;
@@ -17,20 +17,22 @@ export async function translate({
   text,
   systemPrompt,
 }: TranslateOptions): Promise<string> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
-    throw new Error("DEEPSEEK_API_KEY is not configured");
+    throw new Error("OPENROUTER_API_KEY is not configured");
   }
 
-  const response = await fetch(DEEPSEEK_API_URL, {
+  const response = await fetch(OPENROUTER_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://rednote-translate.vercel.app",
+      "X-Title": "RedNote Translate",
     },
     body: JSON.stringify({
-      model: "deepseek-chat",
+      model: "deepseek/deepseek-chat",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: text },
@@ -42,9 +44,9 @@ export async function translate({
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`DeepSeek API error: ${error}`);
+    throw new Error(`OpenRouter API error: ${error}`);
   }
 
-  const data: DeepSeekResponse = await response.json();
+  const data: OpenRouterResponse = await response.json();
   return data.choices[0]?.message?.content || "";
 }
