@@ -19,9 +19,7 @@ export function TextArea({
       onChange={(e) => onChange?.(e.target.value)}
       placeholder={placeholder}
       readOnly={readOnly}
-      className={`w-full h-72 p-4 text-base leading-relaxed border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-shadow ${
-        readOnly ? "bg-gray-50" : "bg-white"
-      }`}
+      className="w-full h-72 text-base leading-relaxed bg-transparent resize-none focus:outline-none placeholder:text-gray-400"
     />
   );
 }
